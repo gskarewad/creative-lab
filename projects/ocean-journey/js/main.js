@@ -1,8 +1,8 @@
 /**
- * Ocean Journey - Main Application Controller
- * Handles Three.js rendering pipeline, deterministic timeline orchestration,
- * responsive 1920x1080 stage scaling, interactive scrubber controls,
- * and exposes window.renderAtTime(timeSeconds) for deterministic frame rendering.
+ * Ocean Journey - Main Application Controller (Mobile-Optimized)
+ * Handles Three.js WebGL pipeline, dynamic responsive scaling for Galaxy S25,
+ * touch gestures (single-tap HUD toggle, double-tap seek, thumb scrubbing),
+ * live marine companion telemetry, and deterministic timeline rendering.
  */
 
 (function() {
@@ -18,22 +18,38 @@
     let playbackSpeed = 1.0;
 
     // DOM Elements
-    let containerEl, canvasContainerEl, letterboxTopEl, letterboxBottomEl;
+    let canvasContainerEl, cinemaStageEl;
     let titleMainEl, titleSubEl, titleBadgeEl, titleCardEl, fadeOverlayEl;
+    let tapSurfaceEl, gestureLeftEl, gestureRightEl;
+    let telemetryDepthEl, telemetryTempEl, telemetryPhaseEl, telemetrySubphaseEl, telemetryZoneEl;
     let playBtn, playIcon, pauseIcon, scrubSlider, timeDisplay, speedBtn, audioBtn, fsBtn, controlBar;
     let hideControlsTimeout = null;
 
+    // Gesture tracking state
+    let lastTapTime = 0;
+    let isTouchDragging = false;
+    let touchStartX = 0;
+    let touchStartTime = 0;
+
     function init() {
-        containerEl = document.getElementById('cinema-stage');
+        cinemaStageEl = document.getElementById('cinema-stage');
         canvasContainerEl = document.getElementById('canvas-container');
-        letterboxTopEl = document.querySelector('.letterbox-bar.top');
-        letterboxBottomEl = document.querySelector('.letterbox-bar.bottom');
 
         titleCardEl = document.getElementById('title-card');
         titleMainEl = document.getElementById('title-main');
         titleSubEl = document.getElementById('title-sub');
         titleBadgeEl = document.getElementById('title-badge');
         fadeOverlayEl = document.getElementById('fade-overlay');
+
+        tapSurfaceEl = document.getElementById('tap-surface');
+        gestureLeftEl = document.getElementById('gesture-left');
+        gestureRightEl = document.getElementById('gesture-right');
+
+        telemetryDepthEl = document.getElementById('telemetry-depth');
+        telemetryTempEl = document.getElementById('telemetry-temp');
+        telemetryPhaseEl = document.getElementById('telemetry-phase');
+        telemetrySubphaseEl = document.getElementById('telemetry-subphase');
+        telemetryZoneEl = document.getElementById('telemetry-zone');
 
         playBtn = document.getElementById('play-btn');
         playIcon = document.getElementById('play-icon');
@@ -47,73 +63,77 @@
 
         // Setup Three.js Scene
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x020d1c);
+        scene.background = new THREE.Color(0x010c1c);
         scene.fog = new THREE.FogExp2(0x021326, 0.0135);
 
-        // Camera setup (Base 16:9 aspect)
-        camera = new THREE.PerspectiveCamera(48, 1920 / 1080, 0.5, 450);
+        // Perspective Camera
+        camera = new THREE.PerspectiveCamera(48, 16 / 9, 0.5, 450);
         camera.position.set(18, -8, 22);
 
-        // Renderer with High Dynamic Range & Mobile Optimization
+        // Mobile-Optimized WebGL Renderer
         renderer = new THREE.WebGLRenderer({
             antialias: true,
             powerPreference: 'high-performance',
             stencil: false,
             depth: true
         });
-        renderer.setSize(1920, 1080);
-        // Galaxy S25 has high DPR screen; cap at 1.5 to guarantee solid 60fps
+
+        // Galaxy S25 / mobile GPU optimization: clamp pixel ratio to 1.5 to guarantee locked 60fps
         const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
         renderer.setPixelRatio(dpr);
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 1.15;
         canvasContainerEl.appendChild(renderer.domElement);
 
-        // Initialize Systems
+        // Initialize Procedural Ocean & Whale Systems
         ocean = OceanEnvironment.createOcean(scene);
         whale = WhaleSystem.createWhale();
         scene.add(whale.group);
 
-        // Expose renderAtTime globally
+        // Expose renderAtTime globally for deterministic inspection
         window.renderAtTime = renderAtTime;
 
-        // Setup Events & UI Listeners
+        // Setup Responsive Viewport & Touch Listeners
         setupEventListeners();
+        setupTouchGestures();
         handleResize();
-        window.addEventListener('resize', handleResize);
-        window.addEventListener('orientationchange', handleResize);
 
-        // Render initial frame
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(handleResize, 100);
+        });
+
+        // Initial render frame
         renderAtTime(0.0);
 
-        // Start requestAnimationFrame loop
+        // Start animation loop
         requestAnimationFrame(animate);
     }
 
     /**
-     * Deterministically renders the scene and overlays at a specific timestamp.
+     * Deterministically renders the visual state and mobile telemetry at any given timestamp.
      * @param {number} timeSeconds - Target time in seconds [0.0, 20.0]
      */
     function renderAtTime(timeSeconds) {
         currentTime = Math.max(0, Math.min(DURATION, timeSeconds));
 
-        // 1. Update Whale Transform & Swimming Deformation
+        // 1. Update Whale Transform & Swimming Dorsoventral Wave
         const whaleState = CinematicDirector.getWhaleTransformAtTime(currentTime);
         whale.group.position.copy(whaleState.pos);
         whale.group.rotation.set(whaleState.rot.x, whaleState.rot.y, whaleState.rot.z);
         whale.update(currentTime);
 
-        // 2. Update Camera Choreography
+        // 2. Update Camera Splines & Underwater Buoyancy
         const camState = CinematicDirector.getCameraTransformAtTime(currentTime, whaleState.pos);
         camera.position.copy(camState.camPos);
         camera.lookAt(camState.camTarget);
         camera.fov = camState.fov;
         camera.updateProjectionMatrix();
 
-        // 3. Update Ocean Atmospheric Elements
+        // 3. Update Volumetric Rays, Waves, Particles, Shoal, Bubbles
         ocean.update(currentTime);
 
-        // 4. Update Documentary Typographic Overlays & Fade-to-Black
+        // 4. Update Documentary Overlays & Fade Transition
         const overlayState = CinematicDirector.getOverlayState(currentTime);
         if (overlayState.cue && overlayState.opacity > 0.01) {
             titleCardEl.style.display = 'block';
@@ -129,15 +149,27 @@
             fadeOverlayEl.style.opacity = overlayState.fadeToBlack.toFixed(3);
         }
 
-        // 5. Update UI Scrubber & Timer Display
-        if (scrubSlider && !scrubSlider.matches(':active')) {
+        // 5. Update Mobile Portrait Companion Telemetry Deck
+        if (CinematicDirector.getTelemetryAtTime) {
+            const telemetry = CinematicDirector.getTelemetryAtTime(currentTime);
+            if (telemetryDepthEl) telemetryDepthEl.textContent = `-${telemetry.depth} m`;
+            if (telemetryTempEl) telemetryTempEl.textContent = `${telemetry.temp} °C`;
+            if (telemetryPhaseEl) telemetryPhaseEl.textContent = telemetry.phase;
+            if (telemetrySubphaseEl) telemetrySubphaseEl.textContent = telemetry.subphase;
+            if (telemetryZoneEl) {
+                telemetryZoneEl.textContent = telemetry.depth > 200 ? 'Bathypelagic Abyss' : 'Sunlit Epipelagic';
+            }
+        }
+
+        // 6. Update Touch Scrubber & Timecode Readout
+        if (scrubSlider && !scrubSlider.matches(':active') && !isTouchDragging) {
             scrubSlider.value = (currentTime / DURATION) * 1000;
         }
         if (timeDisplay) {
             timeDisplay.textContent = formatTime(currentTime) + ' / ' + formatTime(DURATION);
         }
 
-        // 6. Execute Render
+        // 7. Render Three.js Scene
         renderer.render(scene, camera);
     }
 
@@ -164,33 +196,143 @@
         requestAnimationFrame(animate);
     }
 
-    // Proportional 1920x1080 Stage Resizing for Mobile Chrome
+    // Dynamic Sizing tailored for Mobile Screens & Desktops
     function handleResize() {
-        const windowW = window.innerWidth;
-        const windowH = window.innerHeight;
+        if (!canvasContainerEl || !renderer || !camera) return;
 
-        const targetAspect = 1920 / 1080;
-        const screenAspect = windowW / windowH;
+        const w = canvasContainerEl.clientWidth;
+        const h = canvasContainerEl.clientHeight;
 
-        let scale;
-        if (screenAspect > targetAspect) {
-            scale = windowH / 1080;
-        } else {
-            scale = windowW / 1920;
+        if (w > 0 && h > 0) {
+            renderer.setSize(w, h, false);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
         }
 
-        containerEl.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        // Auto-show controls if portrait orientation
+        const isPortrait = window.innerHeight > window.innerWidth;
+        if (isPortrait && controlBar) {
+            controlBar.classList.add('visible');
+        }
+    }
+
+    // Mobile Touch Gestures & Interactive Controls
+    function setupTouchGestures() {
+        if (!tapSurfaceEl) return;
+
+        let tapTimeout = null;
+
+        tapSurfaceEl.addEventListener('click', (e) => {
+            const now = performance.now();
+            const timeSinceLastTap = now - lastTapTime;
+            const rect = tapSurfaceEl.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const widthFraction = clickX / rect.width;
+
+            if (timeSinceLastTap < 320) {
+                // Double Tap Detected!
+                if (tapTimeout) clearTimeout(tapTimeout);
+
+                if (widthFraction < 0.45) {
+                    // Double Tap Left: Seek -3 seconds
+                    triggerGestureIndicator(gestureLeftEl);
+                    currentTime = Math.max(0, currentTime - 3.0);
+                    renderAtTime(currentTime);
+                } else if (widthFraction > 0.55) {
+                    // Double Tap Right: Seek +3 seconds
+                    triggerGestureIndicator(gestureRightEl);
+                    currentTime = Math.min(DURATION, currentTime + 3.0);
+                    renderAtTime(currentTime);
+                } else {
+                    // Double Tap Center: Toggle Play / Pause
+                    togglePlayPause();
+                }
+                lastTapTime = 0;
+            } else {
+                // Single Tap Candidate: wait to distinguish from double-tap
+                lastTapTime = now;
+                tapTimeout = setTimeout(() => {
+                    // Toggle Control Bar Visibility
+                    toggleControlsVisibility();
+                }, 320);
+            }
+        });
+
+        // Touch Swipe Gestures for fast scrub
+        tapSurfaceEl.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartTime = currentTime;
+                isTouchDragging = false;
+            }
+        }, { passive: true });
+
+        tapSurfaceEl.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                const diffX = e.touches[0].clientX - touchStartX;
+                if (Math.abs(diffX) > 15) {
+                    isTouchDragging = true;
+                    // 200px drag = 5 seconds
+                    const seekDelta = (diffX / 200) * 5.0;
+                    const targetTime = Math.max(0, Math.min(DURATION, touchStartTime + seekDelta));
+                    renderAtTime(targetTime);
+                }
+            }
+        }, { passive: true });
+
+        tapSurfaceEl.addEventListener('touchend', () => {
+            if (isTouchDragging) {
+                isTouchDragging = false;
+            }
+        });
+    }
+
+    function triggerGestureIndicator(el) {
+        if (!el) return;
+        el.classList.remove('active');
+        void el.offsetWidth; // Force reflow
+        el.classList.add('active');
+        setTimeout(() => el.classList.remove('active'), 600);
+    }
+
+    function togglePlayPause() {
+        isPlaying = !isPlaying;
+        playIcon.style.display = isPlaying ? 'none' : 'block';
+        pauseIcon.style.display = isPlaying ? 'block' : 'none';
+        showControlsBriefly();
+    }
+
+    function toggleControlsVisibility() {
+        const isPortrait = window.innerHeight > window.innerWidth;
+        if (isPortrait) return; // Keep visible in portrait for convenience
+
+        if (controlBar.classList.contains('visible')) {
+            controlBar.classList.remove('visible');
+            if (hideControlsTimeout) clearTimeout(hideControlsTimeout);
+        } else {
+            showControlsBriefly();
+        }
+    }
+
+    function showControlsBriefly() {
+        controlBar.classList.add('visible');
+        if (hideControlsTimeout) clearTimeout(hideControlsTimeout);
+
+        const isPortrait = window.innerHeight > window.innerWidth;
+        if (!isPortrait && isPlaying) {
+            hideControlsTimeout = setTimeout(() => {
+                if (isPlaying) {
+                    controlBar.classList.remove('visible');
+                }
+            }, 3000);
+        }
     }
 
     function setupEventListeners() {
-        // Play / Pause Toggle
-        playBtn.addEventListener('click', () => {
-            isPlaying = !isPlaying;
-            playIcon.style.display = isPlaying ? 'none' : 'block';
-            pauseIcon.style.display = isPlaying ? 'block' : 'none';
-        });
+        // Play / Pause Button
+        playBtn.addEventListener('click', togglePlayPause);
 
-        // Scrub Slider
+        // Scrubber Slider
         scrubSlider.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
             const targetTime = (val / 1000) * DURATION;
@@ -198,6 +340,7 @@
             playIcon.style.display = 'block';
             pauseIcon.style.display = 'none';
             renderAtTime(targetTime);
+            showControlsBriefly();
         });
 
         // Playback Speed Toggle
@@ -207,13 +350,15 @@
             speedIdx = (speedIdx + 1) % speeds.length;
             playbackSpeed = speeds[speedIdx];
             speedBtn.textContent = `${playbackSpeed}x`;
+            showControlsBriefly();
         });
 
-        // Soundscape Synthesizer Toggle
+        // Ambient Soundscape Synthesizer
         audioBtn.addEventListener('click', () => {
             const active = OceanAudio.toggle();
             audioBtn.classList.toggle('active', active);
             audioBtn.title = active ? 'Soundscape: ON' : 'Soundscape: OFF';
+            showControlsBriefly();
         });
 
         // Fullscreen Toggle
@@ -223,40 +368,36 @@
             } else {
                 document.exitFullscreen().catch(() => {});
             }
+            showControlsBriefly();
         });
 
-        // Keyboard Controls (Space to Play/Pause, Left/Right Arrow to seek)
+        // Keyboard Controls
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
-                playBtn.click();
+                togglePlayPause();
             } else if (e.code === 'ArrowRight') {
                 isPlaying = false;
                 playIcon.style.display = 'block';
                 pauseIcon.style.display = 'none';
                 renderAtTime(Math.min(DURATION, currentTime + 0.5));
+                showControlsBriefly();
             } else if (e.code === 'ArrowLeft') {
                 isPlaying = false;
                 playIcon.style.display = 'block';
                 pauseIcon.style.display = 'none';
                 renderAtTime(Math.max(0, currentTime - 0.5));
+                showControlsBriefly();
             }
         });
 
-        // Auto-hiding control bar for uninterrupted cinematic viewing
-        function showControls() {
-            controlBar.classList.add('visible');
-            if (hideControlsTimeout) clearTimeout(hideControlsTimeout);
-            hideControlsTimeout = setTimeout(() => {
-                if (isPlaying) {
-                    controlBar.classList.remove('visible');
-                }
-            }, 2800);
-        }
+        // Mouse activity in landscape/desktop
+        window.addEventListener('mousemove', () => {
+            const isPortrait = window.innerHeight > window.innerWidth;
+            if (!isPortrait) showControlsBriefly();
+        });
 
-        window.addEventListener('mousemove', showControls);
-        window.addEventListener('touchstart', showControls, { passive: true });
-        showControls();
+        showControlsBriefly();
     }
 
     // Initialize when DOM is ready

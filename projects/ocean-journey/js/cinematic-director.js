@@ -202,9 +202,39 @@ window.CinematicDirector = (function() {
         };
     }
 
+    function getTelemetryAtTime(timeSeconds) {
+        const t = Math.max(0, Math.min(20, timeSeconds));
+        const wt = getWhaleTransformAtTime(t);
+        // Vertical translation maps from abyssal bathypelagic depth (-420m) to epipelagic surface (-14m)
+        const depthFraction = Math.max(0, Math.min(1, (wt.pos.y + 22.0) / 48.0));
+        const depthMeters = Math.round(lerp(420, 14, depthFraction));
+        const tempCelsius = (lerp(3.2, 19.8, depthFraction)).toFixed(1);
+
+        let phase = "Abyssal Twilight";
+        let subphase = "Stationary listening in deep bathypelagic waters";
+        if (t > 4.8 && t <= 9.5) {
+            phase = "Sunlight Reveal";
+            subphase = "Entering downwelling surface god rays";
+        } else if (t > 9.5 && t <= 14.8) {
+            phase = "Intimate Flank Pass";
+            subphase = "Ventral pleats & 5-meter pectoral foil";
+        } else if (t > 14.8) {
+            phase = "Surface Ascent";
+            subphase = "Powering toward the sunburst boundary";
+        }
+
+        return {
+            depth: depthMeters,
+            temp: tempCelsius,
+            phase: phase,
+            subphase: subphase
+        };
+    }
+
     return {
         getWhaleTransformAtTime,
         getCameraTransformAtTime,
-        getOverlayState
+        getOverlayState,
+        getTelemetryAtTime
     };
 })();

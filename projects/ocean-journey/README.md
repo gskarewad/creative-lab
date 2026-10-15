@@ -77,13 +77,27 @@ Every spatial position, spine undulation wave, camera matrix, lighting shimmer, 
    http://localhost:8080/projects/ocean-journey/
    ```
 
+### 📱 Mobile Screen Optimizations (Galaxy S25 & Mobile Chrome):
+- **Dual Display Modes**:
+  - **Portrait Companion Mode**: In vertical orientation, the 16:9 cinematic video is placed comfortably at the top, accompanied by a real-time **Expedition Telemetry Deck** below showing live depth, water temperature, marine zone, and observation phase logs, with thumb-friendly controls docked at the bottom.
+  - **Landscape Cinema Mode**: In horizontal orientation, the video expands edge-to-edge, with controls styled as a floating glassmorphism pill that auto-hides after 3 seconds of inactivity.
+- **Touch Gestures**:
+  - **Single Tap**: Toggle controls overlay visibility.
+  - **Double-Tap Left Side**: Instant -3s jump with glowing visual ripple indicator.
+  - **Double-Tap Right Side**: Instant +3s jump with glowing visual ripple indicator.
+  - **Horizontal Touch Drag**: Scrub smoothly backward or forward across the timeline.
+- **Galaxy S25 Performance Tuning**:
+  - Capped device pixel ratio (DPR 1.5) to maintain locked 60 FPS without thermal throttling or high battery consumption.
+  - Safe-area insets (`env(safe-area-inset-bottom)`, `env(safe-area-inset-left)`) accommodated for camera cutouts and navigation bars.
+  - 48px minimum touch targets and generous scrubber touch-hit zones.
+
 ### Interactive Controls:
-- **Play / Pause**: Tap play/pause button or press `Space`.
+- **Play / Pause**: Tap play/pause button, double-tap screen center, or press `Space`.
 - **Scrubber Bar**: Drag to seek instantaneously to any point in the 20-second timeline.
 - **Speed**: Toggle between 1×, 0.5× (slow motion), 0.25×, and 2×.
 - **Soundscape**: Tap the speaker icon to toggle the synthesized procedural ocean soundscape.
 - **Fullscreen**: Tap the fullscreen icon for an immersive edge-to-edge experience.
-- **Controls Auto-Hide**: Controls automatically fade after 2.5 seconds of inactivity and reappear on tap/mouse movement.
+- **Controls Auto-Hide**: Controls automatically fade after 3 seconds of inactivity in landscape and reappear on tap.
 
 ---
 
