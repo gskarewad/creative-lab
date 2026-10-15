@@ -1,78 +1,80 @@
 ---
 name: cinematic-video
-description: Creates visually exceptional, cinematic HTML/CSS/JavaScript experiences designed for deterministic HyperFrames video rendering. Use when creating, improving, or preparing animations, visual explainers, documentaries, and video projects for the S25 and EC2 workflow.
+description: Create visually compelling, cinematic HTML/CSS/JavaScript animations and self-contained projects designed for mobile Chrome development and later video rendering on EC2. Use when creating or improving visual experiences, animations, explainers, and documentary scenes.
 ---
 
-# Cinematic Video Production Skill
+# Cinematic Creative Project Skill
 
-## Objective
-Create polished, visually engaging animated experiences that work in mobile Chrome and can be rendered reliably into MP4 videos using HyperFrames on Ubuntu EC2.
+## Environment Separation — Mandatory
+
+### Galaxy S25: Creation Only
+- Use Antigravity to generate, edit, and improve HTML, CSS, and JavaScript.
+- Preview and test the project in Chrome on the S25.
+- Do not install, invoke, inspect, or troubleshoot HyperFrames on the S25.
+- Do not attempt video rendering on the S25.
+- Do not waste tokens checking EC2, video-rendering tools, or HyperFrames documentation during ordinary project creation.
+- Focus on producing an excellent, complete, portable HTML/JS project.
+
+### EC2: Rendering Only
+- HyperFrames rendering, video export, render validation, and rendering troubleshooting belong to the EC2 workflow.
+- The project must be portable to EC2 and support deterministic animation.
+- Do not assume HyperFrames is available in the S25 environment.
+- Only investigate HyperFrames integration when explicitly asked to prepare or troubleshoot the EC2 rendering workflow.
 
 ## 1. Visual Quality
-- Prioritize cinematic storytelling and visual spectacle over generic UI layouts.
-- Use deliberate composition, depth, lighting, shadows, atmosphere, camera movement, particles, and smooth transitions where appropriate.
-- Use Three.js for meaningful 3D scenes; use CSS and Canvas when they are more efficient.
-- Avoid static slides, generic gradient backgrounds, repetitive effects, excessive text, and unnecessary interface panels.
-- Every scene must have a clear visual focal point and purposeful motion.
-- Use strong opening imagery, progressive reveals, visual variation, and a satisfying ending.
-- Choose visual techniques appropriate to the subject; do not force 3D into every project.
+- Create premium, cinematic visual experiences rather than generic websites or static slides.
+- Prioritize compelling composition, depth, lighting, atmosphere, camera movement, meaningful motion, and smooth transitions.
+- Use Three.js for valuable 3D effects; otherwise prefer efficient CSS, Canvas, and vanilla JavaScript.
+- Avoid generic gradients, repetitive animations, excessive text, unnecessary UI panels, and placeholder visuals.
+- Establish a strong opening, progressive visual reveals, varied pacing, and a memorable ending.
+- Choose techniques that suit the subject instead of forcing 3D into every project.
+- Inspect the actual Chrome preview and improve weak visuals before declaring the project complete.
 
-## 2. Video Format
-- Default output: 1920x1080, 30 FPS.
-- Support portrait 1080x1920 when explicitly requested.
-- Keep the video composition fixed-resolution and scale it proportionally for mobile preview.
-- Design safe margins for titles and captions.
-- Keep scene timing, transitions, typography, and audio synchronized.
+## 2. Video Composition
+- Default composition: 1920x1080 landscape at 30 FPS.
+- Support 1080x1920 portrait when explicitly requested.
+- Keep composition dimensions independent of the S25 viewport; scale proportionally for mobile preview.
+- Maintain safe margins for titles and captions.
+- Use a consistent visual language, typography, colour palette, and transitions.
 
 ## 3. Deterministic Animation
-- Make every video frame reproducible from its timeline timestamp.
-- Centralize animation in explicit functions such as renderAtTime(timeSeconds).
-- Derive camera transforms, object positions, lighting, captions, and transitions from absolute time.
-- Do not depend on accumulated frame deltas, uncontrolled wall-clock time, user input, or unseeded randomness.
-- Seed procedural randomness or precompute it.
-- Ensure seeking directly to any timestamp produces the correct state.
-- Wait for required fonts, images, textures, models, and audio metadata before rendering.
-- Never assume requestAnimationFrame timing alone is sufficient for deterministic video output.
+- Make animation state reproducible from an explicit timeline timestamp.
+- Where appropriate, expose a function such as renderAtTime(timeSeconds).
+- Derive positions, camera transforms, lighting, effects, captions, and transitions from absolute time.
+- Avoid accumulated frame-delta dependence, uncontrolled wall-clock timing, and unseeded randomness in video-critical animation.
+- Ensure seeking directly to a timestamp produces the correct visual state.
+- Keep interactive preview controls separate from the animation timeline.
+- Avoid mandatory external APIs, remote runtime assets, and unpredictable network dependencies.
+- Deterministic animation is a portability requirement, not permission to run video rendering on the phone.
 
-## 4. HyperFrames Compatibility
-- Inspect the installed HyperFrames version, project conventions, and official/local CLI help before choosing integration APIs.
-- Do not invent HyperFrames components, timeline schemas, commands, or configuration fields.
-- Separate interactive preview controls from deterministic video playback.
-- Ensure scenes can render in headless Chromium without manual interaction.
-- Keep assets local where practical and avoid runtime dependencies on external APIs.
-- Validate the project and render a short draft before a full export.
-- Check frame timing, missing assets, browser errors, blank frames, clipping, and audio synchronization.
-- Do not claim successful rendering unless an actual render has completed.
+## 4. Project Structure
+- Create each project under projects/<project-name>/.
+- Keep HTML, CSS, JavaScript, and essential assets together.
+- Use modular files when that improves maintainability; avoid unnecessary build systems and dependencies.
+- Bundle important fonts, images, textures, and other assets locally where practical.
+- Include a concise README describing the project, its entry point, local preview instructions, assets, duration, aspect ratio, and timeline behavior.
+- Keep the project self-contained and Git-friendly.
 
-## 5. S25 Compatibility
-- Prefer HTML, CSS, vanilla JavaScript, and Three.js where appropriate.
-- Keep dependencies and asset sizes reasonable for an Android phone.
-- Support local Chrome preview without a backend.
-- Ensure controls do not obstruct the composition.
-- Provide a clear way to preview the animation and its timeline.
+## 5. S25 Preview and Performance
+- Ensure the project opens and works in Chrome on Android.
+- Keep rendering and memory use reasonable for the Galaxy S25.
+- Handle viewport scaling and device pixel ratio carefully.
+- Provide a clear preview entry point.
+- Fix JavaScript errors, missing assets, layout clipping, and obvious performance problems.
+- Do not claim browser compatibility has been verified unless the project was actually tested.
 
-## 6. Project Structure
-- Keep each project self-contained under projects/<project-name>/.
-- Separate scene logic, animation/timeline logic, styles, and assets when useful.
-- Keep code simple enough to maintain and reuse.
-- Include a README with preview instructions, timeline details, dependencies, and verified rendering commands.
-- Reuse shared templates and helpers when available rather than duplicating infrastructure.
+## 6. Required Workflow
+1. Read this skill and inspect the existing workspace and reusable templates.
+2. Understand the creative objective and choose sensible defaults.
+3. Build the complete working HTML/JS experience.
+4. Preview it in Chrome on the S25 and inspect the actual visuals.
+5. Improve composition, motion, pacing, and visual quality.
+6. Ensure video-critical animation is deterministic and the project is portable.
+7. Document the project and report what was actually tested.
 
-## 7. Required Workflow
-1. Inspect the existing workspace and installed HyperFrames setup before coding.
-2. Establish the story, visual direction, duration, aspect ratio, and scene sequence.
-3. Implement a complete working experience, not a static mockup.
-4. Preview in Chrome and inspect the actual visuals.
-5. Validate deterministic seeking and rendering compatibility.
-6. Render a draft and inspect representative frames and the complete playback.
-7. Fix visual defects and timing issues before final delivery.
-8. Report what was tested and what remains unverified.
-
-## 8. Implementation Principles
-- Prefer a few exceptional scenes over many weak scenes.
-- Animate with intention; avoid motion that does not improve storytelling.
-- Use realistic scale, lighting, and spatial relationships when relevant.
-- Keep narration and on-screen text concise.
-- Avoid unnecessary dependencies, build systems, and infrastructure.
-- Do not rebuild or reinstall working tools without a clear reason.
-- When requirements are ambiguous, choose sensible creative defaults and proceed.
+## 7. Token and Tool Discipline
+- Do not repeat setup investigations for tools that belong to the other environment.
+- Do not add unnecessary dependencies, infrastructure, or implementation steps.
+- Do not invent APIs or claim tests passed without evidence.
+- Make reasonable creative decisions and proceed without asking unnecessary questions.
+- Prioritize a working, visually excellent result over long explanations.
