@@ -30,11 +30,21 @@ description: Create visually compelling, cinematic HTML/CSS/JavaScript animation
 - Choose techniques that suit the subject instead of forcing 3D into every project.
 - Inspect the actual Chrome preview and improve weak visuals before declaring the project complete.
 
-## 2. Video Composition
-- Default composition: 1920x1080 landscape at 30 FPS.
-- Support 1080x1920 portrait when explicitly requested.
-- Keep composition dimensions independent of the S25 viewport; scale proportionally for mobile preview.
-- Maintain safe margins for titles and captions.
+## 2. Mobile-First Composition — Mandatory
+- Design for the Galaxy S25 portrait screen FIRST, not for desktop browsers.
+- Default creative canvas: portrait 9:16, with a 1080x1920 logical composition for video-oriented projects.
+- The initial Chrome preview must feel intentionally designed for a phone, not like a desktop website squeezed into a narrow viewport.
+- Use the full available screen height and width. Avoid desktop navigation, wide layouts, tiny controls, and unnecessary side panels.
+- Keep the main subject large, prominent, and easy to see on a phone.
+- Compose scenes vertically: foreground, subject, background, and light should create depth within the portrait frame.
+- Keep titles and captions short, large, high-contrast, and readable without zooming.
+- Keep important content away from screen edges and device cutouts.
+- Use responsive CSS and a portrait-first layout. Do not simply scale a 16:9 desktop canvas down to fit the phone.
+- If using Three.js, adapt the camera frustum, field of view, object placement, and camera movement for portrait composition. Reposition subjects rather than merely cropping landscape framing.
+- Keep visual focus near the centre of the portrait composition while allowing deliberate vertical movement.
+- Default animation output: portrait 1080x1920 at 30 FPS.
+- Landscape 1920x1080 is an explicit alternative only when requested.
+- If both mobile interaction and video composition are needed, keep the visual scene responsive while preserving the chosen output aspect ratio.
 - Use a consistent visual language, typography, colour palette, and transitions.
 
 ## 3. Deterministic Animation
@@ -55,13 +65,20 @@ description: Create visually compelling, cinematic HTML/CSS/JavaScript animation
 - Include a concise README describing the project, its entry point, local preview instructions, assets, duration, aspect ratio, and timeline behavior.
 - Keep the project self-contained and Git-friendly.
 
-## 5. S25 Preview and Performance
-- Ensure the project opens and works in Chrome on Android.
-- Keep rendering and memory use reasonable for the Galaxy S25.
-- Handle viewport scaling and device pixel ratio carefully.
-- Provide a clear preview entry point.
-- Fix JavaScript errors, missing assets, layout clipping, and obvious performance problems.
-- Do not claim browser compatibility has been verified unless the project was actually tested.
+## 5. S25 Mobile Preview and Performance
+- Treat the Galaxy S25 in portrait orientation as the primary design and test target.
+- Ensure the first screen immediately looks polished and fills the mobile viewport appropriately.
+- Use a mobile-first viewport meta tag and CSS sized for narrow screens.
+- Handle portrait orientation, changing viewport height, and device pixel ratio carefully.
+- For Three.js, cap pixel ratio when needed, limit expensive effects, reuse geometries and materials, and avoid excessive particles or costly real-time shadows.
+- Prefer efficient lighting, shaders, and layered visual effects over expensive effects that provide little visible benefit on a phone.
+- Avoid hover-only interactions. Use touch-friendly controls with comfortably sized targets.
+- Prevent accidental horizontal scrolling, clipped subjects, tiny text, and controls hidden behind browser UI.
+- Ensure the animation remains smooth on the S25; reduce complexity when necessary without sacrificing the core visual impact.
+- Provide a simple local preview entry point.
+- Fix JavaScript errors, missing assets, layout issues, and obvious performance problems.
+- Do not claim mobile compatibility has been verified unless the project was actually tested on the phone.
+- Before finishing, inspect the actual portrait Chrome preview and refine composition specifically for the phone screen.
 
 ## 6. Required Workflow
 1. Read this skill and inspect the existing workspace and reusable templates.
